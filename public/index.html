@@ -25,10 +25,11 @@
 <body>
   <button id="start">Start</button>
   <h1>Template Pong</h1>
+  <h2 id="winner" class="d-none"></h2>
     <canvas id="pongcanvas" width="600" height="400" class="pongcontainer"></canvas>
 
-    <p>Joueur de gauche : Z et S</p>
-    <p>Joueur de droite : &uarr; et &darr;</p>
+    <span><p>Joueur de gauche : </p><p id="player1Score"></p></span>
+    <span></span><p>Joueur de droite : </p><p id="player2Score"></p></span>
 
   <script type="module" src="./scripts/index.js"></script>
 </body>

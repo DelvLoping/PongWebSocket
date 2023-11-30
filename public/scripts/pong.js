@@ -3,7 +3,8 @@ import { Ball } from "./ball.js";
 import { Text } from "./text.js";
 
 
-export function Pong(canvas) {
+
+export function Pong(canvas, socket) {
 
   console.log("Welcome to PONG!");
 
@@ -11,14 +12,26 @@ export function Pong(canvas) {
 
   let text = undefined;
   let ball = undefined;
-  
+
+  let gameState = undefined;
   // Left paddle
+  function sendPaddleMove(direction) {
+    let move = null
+    if (direction == "ArrowDown") {
+      move = 'down';
+    } else if (direction == "ArrowUp") {
+      move = 'up';
+    }
+    socket.emit("move-paddle", move);
+  }
+  //3652
   const paddleLeft = new Paddle({
     ctx,
     down: "s",
     up: "z",
-    height: canvas.height
-  });
+    height: canvas.height,
+    sendPaddleMove
+  }, socket);
   paddleLeft.position[0] = 0;
 
   // Right paddle
@@ -26,9 +39,11 @@ export function Pong(canvas) {
     ctx,
     down: "ArrowDown",
     up: "ArrowUp",
-    height: canvas.height
-  });
+    height: canvas.height,
+    sendPaddleMove
+  }, socket);
   paddleRight.position[0] = 580;
+
 
   // The ball
   function createBall() {
@@ -39,24 +54,24 @@ export function Pong(canvas) {
       leftPaddle: paddleLeft,
       rightPaddle: paddleRight,
       onEscape: (result) => {
-  
+
         if (ball) {
           ball = undefined;
-          text = new Text({ ctx, text: "Gagnant: " + (result.winner === 'left' ? 'Gauche' : 'Droit')});
+          text = new Text({ ctx, text: "Gagnant: " + (result.winner === 'left' ? 'Gauche' : 'Droit') });
           text.position = [
             canvas.width / 2.0,
             canvas.height / 2.0
           ]
           endGame();
         }
-  
+
       }
-    });
-    ball.position = [ canvas.width / 2.0, canvas.height / 2.0 ];
-  
+    }, socket);
+    ball.position = [canvas.width / 2.0, canvas.height / 2.0];
+
   }
 
-  
+
   function endGame() {
     setTimeout(
       () => {
@@ -69,31 +84,74 @@ export function Pong(canvas) {
 
   // The animation loop
   function loop() {
+
     // First update the position of all the objects
-    paddleLeft.update();
-    paddleRight.update();
-    if (ball) { ball.update(); }
-    if (text) { text.update(); }
+    if (gameState) {
+      // console.log(gameState.players);
+      // console.log(Object.values(gameState.players)[0]);
+      let player0 = Object.values(gameState.players)[0];
+      let player1 = Object.values(gameState.players)[1];
+      if (player0) {
+        paddleLeft.update(player0);
+      }
+      if (player1) {
 
-    // Clear the canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+        paddleRight.update(player1);
+      }
+      // console.log(ball)
+      if (ball) { ball.update(gameState.ball); }
+      if (text) { text.update(gameState.text); }
 
-    // Draw all the objects
-    paddleLeft.draw();
-    paddleRight.draw();
+      // Clear the canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (ball) { ball.draw(); }
-    if (text) { text.draw(); }
+      // Draw all the objects
+      paddleLeft.draw();
+      paddleRight.draw();
 
+      if (ball) { ball.draw(); }
+      if (text) { text.draw(); }
+    }
     // Program the next animation frame
-    requestAnimationFrame(loop);
+
   }
 
   createBall();
 
   // Start the game
-  requestAnimationFrame(loop)
 
+
+  socket.on('update-game-state', (data) => {
+    if (data.gameState) {
+      gameState = data.gameState;
+      if (gameState.players && Object.values(gameState.players??[])?.length == 2) {
+
+
+        let player1Score = document.getElementById("player1Score");
+        let player2Score = document.getElementById("player2Score");
+        let id1 = Object.keys(gameState.players)[0]
+        let id2 = Object.keys(gameState.players)[1]
+console.log(player1Score,player2Score,id1,id2)
+        if (parseInt(player1Score.textContent) != gameState.players[id1].score) {
+          player1Score.textContent = gameState.players[id1].score
+        }
+        if (parseInt(player2Score.textContent) != gameState.players[id2].score) {
+          player2Score.textContent = gameState.players[id2].score
+        }
+      }
+      console.log("gameState", gameState);
+      requestAnimationFrame(loop)
+    }
+  }
+  );
+
+  socket.on('end', (data) => {
+    if (data.gameState) {
+      let winner = document.getElementById("winner");
+      winner.classList.remove('d-none');
+      winner.textContent=gameState.winner
+    }}
+    );
 }
 
 export default Pong;

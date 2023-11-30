@@ -2,7 +2,7 @@ export function Text(options) {
 
   this.position = [250, 200]
 
-  this.update = () => {
+  this.update = (gameState) => {
     
   }
 

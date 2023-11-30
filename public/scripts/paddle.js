@@ -8,26 +8,16 @@ export function Paddle(options) {
   this.speed = 0;
 
   addEventListener('keydown', (event) => {
-    if (event.key === options.down) {
-      this.speed = 10;
-    } else if (event.key === options.up) {
-      this.speed = -10;
-    }
+    //console.log(event.key);
+      options.sendPaddleMove(event.key)
   });
 
-  addEventListener('keyup', (event) => {
-    if (event.key === options.down) {
-      this.speed = 0;
-    } else if (event.key === options.up) {
-      this.speed = 0;
-    }
-  })
-  
-  this.update = () => {
-    this.position[1] = this.position[1] + this.speed;
-    if (this.position[1] < 0) { this.position[1] = 0; }
-    if (this.position[1] + this.height > options.height) { this.position[1] = options.height - this.height; }
+ 
 
+  this.update = (gameState) => {
+    //console.log(gameState);
+    this.position[1] = gameState.y;
+    this.position[0] = gameState.x;
   }
 
   this.draw = () => {

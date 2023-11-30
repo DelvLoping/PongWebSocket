@@ -7,21 +7,32 @@ import path from "path";
 // Définition de la structure pour l'état du jeu
 interface GameState {
   ball: { x: number; y: number; speedX: number; speedY: number };
-  players: { [socketId: string]: { x: number; y: number } };
+  players: { [socketId: string]: { x: number; y: number, score: number } };
   running: boolean;
-}
+  height: number;
+  width: number;
+  speed: number;
+  winner?: string;
+  winCondition: number;
 
+}
+export const ballVal = { x: 300, y: 200, speedX: 3, speedY: 3 }
+export const gameVal:GameState = {
+  ball: {...ballVal},
+  players: {},
+  running: false,
+  height: 600,
+  width: 400,
+  speed: 10,
+  winCondition: 5
+};
 // Classe du serveur
 export class PongServer {
   private httpServer: HTTPServer;
   private app: Application;
   private io: SocketIOServer;
 
-  private gameState: GameState = {
-    ball: { x: 0, y: 0, speedX: 5, speedY: 5 },
-    players: {},
-    running: false
-  };
+  private gameState: GameState = {...gameVal}
 
   private readonly DEFAULT_PORT = 5050;
 
@@ -54,15 +65,20 @@ export class PongServer {
       // Nouvel utilisateur connecté
 
       socket.on("start-game", () => {
-        this.gameState.running = true;
+        if(this.gameState.winner){
+          this.gameState={...gameVal}
+        }
+        this.gameState.running = !this.gameState.running;
         // Envoi de l'état initial du jeu à l'utilisateur
 
-        socket.emit("update-game-state", { gameState: this.gameState });
+
 
         // Ajout d'un nouvel utilisateur à l'état du jeu
-        this.gameState.players[socket.id] = { x: 0, y: 0 }; // Ajoutez une logique appropriée pour positionner les raquettes initiales
 
+        this.gameState.players[socket.id] = { x: 0, y: 0, score: 0 }; // Ajoutez une logique appropriée pour positionner les raquettes initiales
+        this.gameState.players[socket.id + '1'] = { x: 580, y: 0, score: 0 };
         // Émission des informations mises à jour à tous les clients
+        // socket.emit("update-game-state", { gameState: this.gameState });
         this.broadcastToAll("update-game-state", { gameState: this.gameState });
 
       });
@@ -74,7 +90,7 @@ export class PongServer {
         this.updatePaddlePosition(socket.id, direction);
 
         // Émission des informations mises à jour à tous les clients
-        this.broadcastToAll("update-game-state", { gameState: this.gameState });
+        //this.broadcastToAll("update-game-state", { gameState: this.gameState });
       });
 
       // Gestion de la déconnexion d'un utilisateur
@@ -87,13 +103,24 @@ export class PongServer {
     });
 
     // Logique de mise à jour du jeu (boucle de jeu)
-    setInterval(() => {
+    const loop = setInterval(() => {
       // Logique de mise à jour du jeu (position de la balle, etc.)
-      this.updateGameState();
 
       // Émission des informations mises à jour à tous les clients
-      this.broadcastToAll("update-game-state", { gameState: this.gameState });
+      if (this.gameState.running) {
+        this.updateGameState();
+        this.broadcastToAll("update-game-state", { gameState: this.gameState });
+        //console.log(this.gameState)
+      }
+      if (this.gameState.winner) {
+        this.broadcastToAll("end", { gameState: this.gameState });
+        clearInterval(loop);
+      }
     }, 16); // Environ 60 FPS
+  }
+
+  private resetRound() {
+    this.gameState.ball = {...ballVal}
   }
 
   private broadcastToAll(event: string, data: any): void {
@@ -107,70 +134,116 @@ export class PongServer {
   }
   private updatePaddlePosition(socketId: string, direction: string): void {
     const player = this.gameState.players[socketId];
-
     // Assurez-vous que le joueur existe dans l'état du jeu
     if (player) {
       // Définissez la vitesse de déplacement de la raquette
-      const paddleSpeed = 5;
 
       // Mettez à jour la position de la raquette en fonction de la direction
       switch (direction) {
         case "up":
-          player.y -= paddleSpeed;
+          player.y -= this.gameState.speed;
           break;
         case "down":
-          player.y += paddleSpeed;
+          player.y += this.gameState.speed;
           break;
         // Ajoutez d'autres cas si nécessaire
       }
+      if (player.y >= this.gameState.height) {
+        player.y = this.gameState.height
+      } else if (player.y <= 0) {
+        player.y = 0
+      }
 
       // Limitez la position de la raquette pour éviter qu'elle ne sorte du terrain de jeu
-      const maxY = 100; // Ajustez la valeur selon la hauteur de votre terrain de jeu
-      const minY = -100; // Ajustez la valeur selon la hauteur de votre terrain de jeu
+      //const maxY = 100; // Ajustez la valeur selon la hauteur de votre terrain de jeu
+      //const minY = 0; // Ajustez la valeur selon la hauteur de votre terrain de jeu
 
-      player.y = Math.max(minY, Math.min(maxY, player.y));
+      //player.y = Math.max(minY, Math.min(maxY, player.y));
     }
   }
 
-
+  private endGame(playerId) {
+    this.gameState.winner = playerId;
+  }
   private updateGameState(): void {
+    for (const playerId in this.gameState.players) {
+      const player = this.gameState.players[playerId];
+      if (player.score >= this.gameState.winCondition) {
+        this.endGame(playerId)
+      }
+    }
+
     // Mettez à jour la position de la balle en fonction de sa vitesse
     this.gameState.ball.x += this.gameState.ball.speedX;
     this.gameState.ball.y += this.gameState.ball.speedY;
 
     // Gestion des collisions avec les bords du terrain de jeu
-    const maxX = 200; // Ajustez la valeur selon la largeur de votre terrain de jeu
-    const minX = -200; // Ajustez la valeur selon la largeur de votre terrain de jeu
-    const maxY = 100; // Ajustez la valeur selon la hauteur de votre terrain de jeu
-    const minY = -100; // Ajustez la valeur selon la hauteur de votre terrain de jeu
+    const maxX = this.gameState.height; // Ajustez la valeur selon la largeur de votre terrain de jeu
+    const minX = 0; // Ajustez la valeur selon la largeur de votre terrain de jeu
+    const maxY = this.gameState.width; // Ajustez la valeur selon la hauteur de votre terrain de jeu
+    const minY = 0; // Ajustez la valeur selon la hauteur de votre terrain de jeu
+    const collisionThreshold = 5; // Ajustez la valeur du seuil de collision
 
-    if (this.gameState.ball.x > maxX || this.gameState.ball.x < minX) {
+    // Utilisez une fonction pour gérer la réflexion de la balle en cas de collision
+    const reflectBall = (reflectionAxis: 'x' | 'y') => {
+      this.gameState.ball[`speed${reflectionAxis.toUpperCase()}`] *= -1;
+    };
+
+    // Gestion des collisions avec les bords du terrain de jeu
+    if (this.gameState.ball.x > maxX - collisionThreshold || this.gameState.ball.x < minX + collisionThreshold) {
       // Inverser la direction horizontale en cas de collision avec les bords gauche ou droit
-      this.gameState.ball.speedX *= -1;
+      // this.gameState.ball.x = Math.max(minX + collisionThreshold, Math.min(this.gameState.ball.x, maxX - collisionThreshold));
+      // reflectBall('x');
+      let id: string | null = null;
+      if (this.gameState.ball.x > maxX - collisionThreshold) {
+        id = Object.keys(this.gameState.players)[0]
+      } else if (this.gameState.ball.x < minX + collisionThreshold) {
+        id = Object.keys(this.gameState.players)[1]
+
+      }
+      if (id) {
+        this.gameState.players[id].score += 1;
+      }
+      this.resetRound();
+      return;
     }
 
-    if (this.gameState.ball.y > maxY || this.gameState.ball.y < minY) {
+    if (this.gameState.ball.y > maxY - collisionThreshold || this.gameState.ball.y < minY + collisionThreshold) {
       // Inverser la direction verticale en cas de collision avec les bords supérieur ou inférieur
-      this.gameState.ball.speedY *= -1;
+      this.gameState.ball.y = Math.max(minY + collisionThreshold, Math.min(this.gameState.ball.y, maxY - collisionThreshold));
+      reflectBall('y');
     }
 
     // Gestion des collisions avec les raquettes
     for (const playerId in this.gameState.players) {
       const player = this.gameState.players[playerId];
-      const paddleWidth = 10; // Ajustez la valeur selon la largeur de vos raquettes
-      const paddleHeight = 30; // Ajustez la valeur selon la hauteur de vos raquettes
+      const paddleWidth = 20; // Ajustez la valeur selon la largeur de vos raquettes
+      const paddleHeight = 100; // Ajustez la valeur selon la hauteur de vos raquettes
 
+      // Check for collision with the left and right sides of the paddle
       if (
-        this.gameState.ball.x > player.x - paddleWidth / 2 &&
-        this.gameState.ball.x < player.x + paddleWidth / 2 &&
-        this.gameState.ball.y > player.y - paddleHeight / 2 &&
-        this.gameState.ball.y < player.y + paddleHeight / 2
+        this.gameState.ball.x + collisionThreshold > player.x &&
+        this.gameState.ball.x - collisionThreshold < player.x + paddleWidth &&
+        this.gameState.ball.y > player.y &&
+        this.gameState.ball.y < player.y + paddleHeight
       ) {
         // Inverser la direction horizontale en cas de collision avec une raquette
-        this.gameState.ball.speedX *= -1;
+        reflectBall('x');
+      }
+
+      // Check for collision with the top and bottom sides of the paddle
+      if (
+        this.gameState.ball.y + collisionThreshold > player.y &&
+        this.gameState.ball.y - collisionThreshold < player.y + paddleHeight &&
+        this.gameState.ball.x > player.x &&
+        this.gameState.ball.x < player.x + paddleWidth
+      ) {
+        // Inverser la direction verticale en cas de collision avec une raquette
+        reflectBall('y');
       }
     }
   }
+
 
 }
 

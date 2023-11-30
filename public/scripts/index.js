@@ -2,10 +2,13 @@
 
 
 import { Pong } from './pong.js';
-
 const socket = io.connect("http://localhost:5050");
+let button = document.getElementById("start");
+button.addEventListener("click", () => {
+	  socket.emit("start-game");
+} );
 const canvas = document.getElementById('pongcanvas');
-const game = new Pong(canvas);
+const game = new Pong(canvas, socket);
 
 
 // // Global Variables
