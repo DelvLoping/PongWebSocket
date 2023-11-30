@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>Pong</title>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,500,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+  <style>
+    /* Add your styles here */
+    body {
+      text-align: center;
+    }
+
+    canvas {
+      border: 4px solid #343434;
+
+    }
+  </style>
+</head>
+
+<body>
+  <button id="start">Start</button>
+  <h1>Template Pong</h1>
+    <canvas id="pongcanvas" width="600" height="400" class="pongcontainer"></canvas>
+
+    <p>Joueur de gauche : Z et S</p>
+    <p>Joueur de droite : &uarr; et &darr;</p>
+
+  <script type="module" src="./scripts/index.js"></script>
+</body>
+
+</html>
