@@ -1,5 +1,5 @@
 // client.js
-//const io = require('node:socket.io-client')
+import { io } from "https://cdn.socket.io/4.7.2/socket.io.esm.min.js";
 
 import { Pong } from './pong.js';
 const socket = io.connect("http://localhost:5050");
