@@ -17,8 +17,8 @@ interface GameState {
 
 }
 export const ballVal = { x: 300, y: 200, speedX: 3, speedY: 3 }
-export const gameVal:GameState = {
-  ball: {...ballVal},
+export const gameVal: GameState = {
+  ball: { ...ballVal },
   players: {},
   running: false,
   height: 600,
@@ -32,7 +32,7 @@ export class PongServer {
   private app: Application;
   private io: SocketIOServer;
 
-  private gameState: GameState = {...gameVal}
+  private gameState: GameState = { ...gameVal }
 
   private readonly DEFAULT_PORT = 5050;
 
@@ -65,18 +65,23 @@ export class PongServer {
       // Nouvel utilisateur connecté
 
       socket.on("start-game", () => {
-        if(this.gameState.winner){
-          this.gameState={...gameVal}
+        //console.log()
+        if (Object.keys(this.gameState.players)?.length == 2) {
+          this.gameState.running = !this.gameState.running;
         }
-        this.gameState.running = !this.gameState.running;
+
         // Envoi de l'état initial du jeu à l'utilisateur
 
 
 
         // Ajout d'un nouvel utilisateur à l'état du jeu
-
-        this.gameState.players[socket.id] = { x: 0, y: 0, score: 0 }; // Ajoutez une logique appropriée pour positionner les raquettes initiales
-        this.gameState.players[socket.id + '1'] = { x: 580, y: 0, score: 0 };
+        if (!this.gameState.players[socket.id]) {
+          let x = 0
+          if (Object.keys(this.gameState.players)?.length == 1) {
+            x = 580
+          }
+          this.gameState.players[socket.id] = { x: x, y: 0, score: 0 }
+        }; // Ajoutez une logique appropriée pour positionner les raquettes initiales
         // Émission des informations mises à jour à tous les clients
         // socket.emit("update-game-state", { gameState: this.gameState });
         this.broadcastToAll("update-game-state", { gameState: this.gameState });
@@ -96,6 +101,7 @@ export class PongServer {
       // Gestion de la déconnexion d'un utilisateur
       socket.on("disconnect", () => {
         delete this.gameState.players[socket.id];
+        this.gameState = { ...gameVal }
 
         // Émission des informations mises à jour à tous les clients
         this.broadcastToAll("update-game-state", { gameState: this.gameState });
@@ -107,7 +113,7 @@ export class PongServer {
       // Logique de mise à jour du jeu (position de la balle, etc.)
 
       // Émission des informations mises à jour à tous les clients
-      if (this.gameState.running) {
+      if (this.gameState.running && Object.keys(this.gameState.players)?.length == 2) {
         this.updateGameState();
         this.broadcastToAll("update-game-state", { gameState: this.gameState });
         //console.log(this.gameState)
@@ -120,7 +126,7 @@ export class PongServer {
   }
 
   private resetRound() {
-    this.gameState.ball = {...ballVal}
+    this.gameState.ball = { ...ballVal }
   }
 
   private broadcastToAll(event: string, data: any): void {

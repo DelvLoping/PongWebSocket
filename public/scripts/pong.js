@@ -131,7 +131,7 @@ export function Pong(canvas, socket) {
         let player2Score = document.getElementById("player2Score");
         let id1 = Object.keys(gameState.players)[0]
         let id2 = Object.keys(gameState.players)[1]
-console.log(player1Score,player2Score,id1,id2)
+//console.log(player1Score,player2Score,id1,id2)
         if (parseInt(player1Score.textContent) != gameState.players[id1].score) {
           player1Score.textContent = gameState.players[id1].score
         }
@@ -149,7 +149,7 @@ console.log(player1Score,player2Score,id1,id2)
     if (data.gameState) {
       let winner = document.getElementById("winner");
       winner.classList.remove('d-none');
-      winner.textContent=gameState.winner
+      winner.textContent="Winner : "+gameState.winner
     }}
     );
 }

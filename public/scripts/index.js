@@ -1,5 +1,5 @@
 // client.js
-
+//const io = require('node:socket.io-client')
 
 import { Pong } from './pong.js';
 const socket = io.connect("http://localhost:5050");
