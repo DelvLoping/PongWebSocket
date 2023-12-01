@@ -170,6 +170,9 @@ export class PongServer {
       const player = this.gameState.players[playerId];
       if (player.score >= this.gameState.winCondition) {
         this.endGame(playerId)
+        setTimeout(() => {        
+          this.resetRound();
+      }, 1500)
       }
     }
 
