@@ -1,5 +1,6 @@
 // Import des modules nécessaires
 import express, { Application, Request, Response } from "express";
+var cors = require('cors')
 import socketIO, { Server as SocketIOServer } from "socket.io";
 import { createServer, Server as HTTPServer } from "http";
 import path from "path";
@@ -42,6 +43,7 @@ export class PongServer {
 
   private initialize(): void {
     this.app = express();
+    this.app.use(cors());
     this.httpServer = createServer(this.app);
     this.io = socketIO(this.httpServer);
 
