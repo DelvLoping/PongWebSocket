@@ -43,7 +43,7 @@ export class PongServer {
 
   private initialize(): void {
     this.app = express();
-    this.app.use(cors());
+    this.app.use(cors({origin: '*'}));
     this.httpServer = createServer(this.app);
     this.io = socketIO(this.httpServer);
 
