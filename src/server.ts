@@ -131,7 +131,7 @@ export class PongServer {
         this.broadcastToAll("end", { gameState: this.gameState });
         clearInterval(loop);
       }
-    }, 300); // Environ 60 FPS
+    }, 500); // Environ 60 FPS
   }
 
   private resetRound() {
