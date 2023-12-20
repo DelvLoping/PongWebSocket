@@ -109,7 +109,13 @@ export class PongServer {
     });
 
     // Logique de mise à jour du jeu (boucle de jeu)
+    let i = 0;
     const loop = setInterval(() => {
+      var d = new Date();
+
+      console.log("interval", i, d.toLocaleTimeString());
+      i+=1;
+      
       // Logique de mise à jour du jeu (position de la balle, etc.)
 
       // Émission des informations mises à jour à tous les clients
