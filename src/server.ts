@@ -1,6 +1,6 @@
 // Import des modules nécessaires
 import express, { Application, Request, Response } from "express";
-var cors = require('cors')
+var cors = require("cors");
 import socketIO, { Server as SocketIOServer } from "socket.io";
 import { createServer, Server as HTTPServer } from "http";
 import path from "path";
@@ -8,16 +8,15 @@ import path from "path";
 // Définition de la structure pour l'état du jeu
 interface GameState {
   ball: { x: number; y: number; speedX: number; speedY: number };
-  players: { [socketId: string]: { x: number; y: number, score: number } };
+  players: { [socketId: string]: { x: number; y: number; score: number } };
   running: boolean;
   height: number;
   width: number;
   speed: number;
   winner?: string;
   winCondition: number;
-
 }
-export const ballVal = { x: 300, y: 200, speedX: 3, speedY: 3 }
+export const ballVal = { x: 300, y: 200, speedX: 3, speedY: 3 };
 export const gameVal: GameState = {
   ball: { ...ballVal },
   players: {},
@@ -25,7 +24,7 @@ export const gameVal: GameState = {
   height: 600,
   width: 400,
   speed: 10,
-  winCondition: 5
+  winCondition: 5,
 };
 // Classe du serveur
 export class PongServer {
@@ -33,7 +32,7 @@ export class PongServer {
   private app: Application;
   private io: SocketIOServer;
 
-  private gameState: GameState = { ...gameVal }
+  private gameState: GameState = { ...gameVal };
 
   private readonly DEFAULT_PORT = 5151;
 
@@ -43,7 +42,7 @@ export class PongServer {
 
   private initialize(): void {
     this.app = express();
-    this.app.use(cors({origin: '*'}));
+    this.app.use(cors({ origin: "*" }));
     this.httpServer = createServer(this.app);
     this.io = socketIO(this.httpServer);
 
@@ -63,36 +62,32 @@ export class PongServer {
   }
 
   private handleSocketConnection(): void {
-    this.io.on("connection", socket => {
+    this.io.on("connection", (socket) => {
       // Nouvel utilisateur connecté
-      console.log("Je rentre");
-      
+      //console.log("Je rentre");
+
       socket.on("start-game", () => {
-        //console.log()
+        //console.log("test");
         if (Object.keys(this.gameState.players)?.length == 2) {
           this.gameState.running = !this.gameState.running;
         }
 
         // Envoi de l'état initial du jeu à l'utilisateur
 
-
-
         // Ajout d'un nouvel utilisateur à l'état du jeu
         if (!this.gameState.players[socket.id]) {
-          let x = 0
+          let x = 0;
           if (Object.keys(this.gameState.players)?.length == 1) {
-            x = 580
+            x = 580;
           }
-          this.gameState.players[socket.id] = { x: x, y: 0, score: 0 }
-        }; // Ajoutez une logique appropriée pour positionner les raquettes initiales
+          this.gameState.players[socket.id] = { x: x, y: 0, score: 0 };
+        } // Ajoutez une logique appropriée pour positionner les raquettes initiales
         // Émission des informations mises à jour à tous les clients
         // socket.emit("update-game-state", { gameState: this.gameState });
-        console.log(this.gameState);
-        
+        //console.log(this.gameState);
+
         this.broadcastToAll("update-game-state", { gameState: this.gameState });
-
       });
-
 
       // Gestion des commandes du joueur
       socket.on("move-paddle", (direction: string) => {
@@ -106,7 +101,7 @@ export class PongServer {
       // Gestion de la déconnexion d'un utilisateur
       socket.on("disconnect", () => {
         delete this.gameState.players[socket.id];
-        this.gameState = { ...gameVal }
+        this.gameState = { ...gameVal };
 
         // Émission des informations mises à jour à tous les clients
         this.broadcastToAll("update-game-state", { gameState: this.gameState });
@@ -118,7 +113,10 @@ export class PongServer {
       // Logique de mise à jour du jeu (position de la balle, etc.)
 
       // Émission des informations mises à jour à tous les clients
-      if (this.gameState.running && Object.keys(this.gameState.players)?.length == 2) {
+      if (
+        this.gameState.running &&
+        Object.keys(this.gameState.players)?.length == 2
+      ) {
         this.updateGameState();
         this.broadcastToAll("update-game-state", { gameState: this.gameState });
         //console.log(this.gameState)
@@ -127,11 +125,11 @@ export class PongServer {
         this.broadcastToAll("end", { gameState: this.gameState });
         clearInterval(loop);
       }
-    }, 16); // Environ 60 FPS
+    }, 300); // Environ 60 FPS
   }
 
   private resetRound() {
-    this.gameState.ball = { ...ballVal }
+    this.gameState.ball = { ...ballVal };
   }
 
   private broadcastToAll(event: string, data: any): void {
@@ -160,9 +158,9 @@ export class PongServer {
         // Ajoutez d'autres cas si nécessaire
       }
       if (player.y >= this.gameState.height) {
-        player.y = this.gameState.height
+        player.y = this.gameState.height;
       } else if (player.y <= 0) {
-        player.y = 0
+        player.y = 0;
       }
 
       // Limitez la position de la raquette pour éviter qu'elle ne sorte du terrain de jeu
@@ -180,7 +178,7 @@ export class PongServer {
     for (const playerId in this.gameState.players) {
       const player = this.gameState.players[playerId];
       if (player.score >= this.gameState.winCondition) {
-        this.endGame(playerId)
+        this.endGame(playerId);
       }
     }
 
@@ -196,21 +194,23 @@ export class PongServer {
     const collisionThreshold = 5; // Ajustez la valeur du seuil de collision
 
     // Utilisez une fonction pour gérer la réflexion de la balle en cas de collision
-    const reflectBall = (reflectionAxis: 'x' | 'y') => {
+    const reflectBall = (reflectionAxis: "x" | "y") => {
       this.gameState.ball[`speed${reflectionAxis.toUpperCase()}`] *= -1;
     };
 
     // Gestion des collisions avec les bords du terrain de jeu
-    if (this.gameState.ball.x > maxX - collisionThreshold || this.gameState.ball.x < minX + collisionThreshold) {
+    if (
+      this.gameState.ball.x > maxX - collisionThreshold ||
+      this.gameState.ball.x < minX + collisionThreshold
+    ) {
       // Inverser la direction horizontale en cas de collision avec les bords gauche ou droit
       // this.gameState.ball.x = Math.max(minX + collisionThreshold, Math.min(this.gameState.ball.x, maxX - collisionThreshold));
       // reflectBall('x');
       let id: string | null = null;
       if (this.gameState.ball.x > maxX - collisionThreshold) {
-        id = Object.keys(this.gameState.players)[0]
+        id = Object.keys(this.gameState.players)[0];
       } else if (this.gameState.ball.x < minX + collisionThreshold) {
-        id = Object.keys(this.gameState.players)[1]
-
+        id = Object.keys(this.gameState.players)[1];
       }
       if (id) {
         this.gameState.players[id].score += 1;
@@ -219,10 +219,16 @@ export class PongServer {
       return;
     }
 
-    if (this.gameState.ball.y > maxY - collisionThreshold || this.gameState.ball.y < minY + collisionThreshold) {
+    if (
+      this.gameState.ball.y > maxY - collisionThreshold ||
+      this.gameState.ball.y < minY + collisionThreshold
+    ) {
       // Inverser la direction verticale en cas de collision avec les bords supérieur ou inférieur
-      this.gameState.ball.y = Math.max(minY + collisionThreshold, Math.min(this.gameState.ball.y, maxY - collisionThreshold));
-      reflectBall('y');
+      this.gameState.ball.y = Math.max(
+        minY + collisionThreshold,
+        Math.min(this.gameState.ball.y, maxY - collisionThreshold)
+      );
+      reflectBall("y");
     }
 
     // Gestion des collisions avec les raquettes
@@ -239,7 +245,7 @@ export class PongServer {
         this.gameState.ball.y < player.y + paddleHeight
       ) {
         // Inverser la direction horizontale en cas de collision avec une raquette
-        reflectBall('x');
+        reflectBall("x");
       }
 
       // Check for collision with the top and bottom sides of the paddle
@@ -250,11 +256,8 @@ export class PongServer {
         this.gameState.ball.x < player.x + paddleWidth
       ) {
         // Inverser la direction verticale en cas de collision avec une raquette
-        reflectBall('y');
+        reflectBall("y");
       }
     }
   }
-
-
 }
-
