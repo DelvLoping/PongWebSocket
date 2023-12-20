@@ -139,7 +139,7 @@ export function Pong(canvas, socket) {
           player2Score.textContent = gameState.players[id2].score
         }
       }
-      console.log("gameState", gameState);
+      //console.log("gameState", gameState);
       requestAnimationFrame(loop)
     }
   }
