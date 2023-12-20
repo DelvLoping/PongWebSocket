@@ -1,12 +1,15 @@
 // client.js
-import { io } from "https://cdn.socket.io/4.7.2/socket.io.esm.min.js";
+//import { io } from "https://cdn.socket.io/4.7.2/socket.io.esm.min.js";
 
 import { Pong } from './pong.js';
 const socket = io.connect("http://152.228.174.98:5151");
 let button = document.getElementById("start");
-button.addEventListener("click", () => {
-	  socket.emit("start-game");
-} );
+socket.on('connect',function(){
+	button.addEventListener("click", () => {
+		console.log("Connexion !!!!!!");
+	  	socket.emit("start-game");
+  	});
+});
 const canvas = document.getElementById('pongcanvas');
 const game = new Pong(canvas, socket);
 

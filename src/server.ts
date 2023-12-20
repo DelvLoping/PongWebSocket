@@ -65,7 +65,8 @@ export class PongServer {
   private handleSocketConnection(): void {
     this.io.on("connection", socket => {
       // Nouvel utilisateur connecté
-
+      console.log("Je rentre");
+      
       socket.on("start-game", () => {
         //console.log()
         if (Object.keys(this.gameState.players)?.length == 2) {
@@ -86,6 +87,8 @@ export class PongServer {
         }; // Ajoutez une logique appropriée pour positionner les raquettes initiales
         // Émission des informations mises à jour à tous les clients
         // socket.emit("update-game-state", { gameState: this.gameState });
+        console.log(this.gameState);
+        
         this.broadcastToAll("update-game-state", { gameState: this.gameState });
 
       });
