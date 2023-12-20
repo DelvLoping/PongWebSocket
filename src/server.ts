@@ -35,7 +35,7 @@ export class PongServer {
 
   private gameState: GameState = { ...gameVal }
 
-  private readonly DEFAULT_PORT = 5050;
+  private readonly DEFAULT_PORT = 5151;
 
   constructor() {
     this.initialize();

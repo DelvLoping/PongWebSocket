@@ -2,7 +2,7 @@
 import { io } from "https://cdn.socket.io/4.7.2/socket.io.esm.min.js";
 
 import { Pong } from './pong.js';
-const socket = io.connect("http://152.228.174.98:5050");
+const socket = io.connect("http://152.228.174.98:5151");
 let button = document.getElementById("start");
 button.addEventListener("click", () => {
 	  socket.emit("start-game");

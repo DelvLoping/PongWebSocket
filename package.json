@@ -4,7 +4,6 @@
   "description": "UDP multiplayer pong game",
   "main": "main.js",
   "scripts": {
-    "start": "electron main.js",
     "dev": "nodemon --watch './src/**/*.ts' --exec 'ts-node' ./src/index.ts"
   },
   "devDependencies": {
